@@ -104,8 +104,8 @@ resource "openstack_compute_keypair_v2" "user_keypair" {
   public_key = file("${var.config.keypair}")
 }
 
-resource "openstack_networking_secgroup_v2" "sg_nomad_client2" {
-  name        = "sg_nomad_client2"
+resource "openstack_networking_secgroup_v2" "sg_nomad_client3" {
+  name        = "sg_nomad_client3"
   description = "Security Group for servergroup"
 }
 
@@ -116,7 +116,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_ssh" {
   port_range_min    = 22
   port_range_max    = 22
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client2.id
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_dns1" {
@@ -126,7 +126,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_dns1" {
   port_range_min    = 53
   port_range_max    = 53
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client2.id
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_dns2" {
@@ -136,7 +136,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_dns2" {
   port_range_min    = 53
   port_range_max    = 53
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client2.id
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_4646tcp" {
@@ -146,7 +146,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_4646tcp" {
   port_range_min    = 4646
   port_range_max    = 4646
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client2.id
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_4647tcp" {
@@ -156,7 +156,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_4647tcp" {
   port_range_min    = 4647
   port_range_max    = 4647
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client2.id
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_4648tcp" {
@@ -166,7 +166,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_4648tcp" {
   port_range_min    = 4648
   port_range_max    = 4648
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client2.id
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
 }
 
 resource "openstack_networking_secgroup_rule_v2" "sr_4648udp" {
@@ -176,7 +176,7 @@ resource "openstack_networking_secgroup_rule_v2" "sr_4648udp" {
   port_range_min    = 4648
   port_range_max    = 4648
   remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client2.id
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
 }
 
 
@@ -211,7 +211,7 @@ resource "openstack_compute_instance_v2" "nomad" {
   flavor_name     = var.config.flavor_name
   key_pair        = openstack_compute_keypair_v2.user_keypair.name
   count           = var.config.client_nodes
-  security_groups = ["sg_nomad_client2", "default"]   
+  security_groups = ["sg_nomad_client3", "default"]   
   scheduler_hints {
     group = openstack_compute_servergroup_v2.nomadcluster.id
   }
@@ -350,7 +350,7 @@ resource "openstack_compute_instance_v2" "nomad" {
        inline = [
 #           "cd /tmp ; curl -O https://dl.defined.net/845e340d/v0.8.1./linux/amd64/dnclient",
 #           "sudo chmod +x /tmp/dnclient ; mv /tmp/dnclient /usr/local/bin",
-           "cd /tmp ; git clone https://github.com/quickvm/defined-systemd-units.git",
+           "cd /tmp ; git clone https://github.com/neuroserve/defined-systemd-units.git",
            "cd /tmp/defined-systemd-units ; sudo ./install",
        ]
  
@@ -370,7 +370,8 @@ resource "openstack_compute_instance_v2" "nomad" {
 
   provisioner "remote-exec" {
        inline = [
-           "dnctl enable ; dnctl start",
+           "dnctl enable",
+#          "dnctl start",
        ]
   }
 
@@ -467,7 +468,7 @@ resource "openstack_compute_instance_v2" "nomad" {
 
             "mv /tmp/nomad /usr/local/bin/nomad",
             "sudo systemctl enable nomad",
-            "sudo systemctl start nomad",
+#           "sudo systemctl start nomad",
         ]
    }
 

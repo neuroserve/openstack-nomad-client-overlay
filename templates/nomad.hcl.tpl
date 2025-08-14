@@ -2,14 +2,13 @@ data_dir           = "/opt/nomad"
 enable_syslog      = true
 region             = "${ps_region}"
 datacenter         = "${datacenter_name}"
-name               = "${node_name}"
 client {
   enabled          = true
 # node_pool        = ""
   cni_path         = "/opt/cni/bin"
   cni_config_dir   = "/opt/cni/config"
   server_join {
-    retry_join     = [ "100.100.0.10", "100.100.0.11", "100.100.0.12" ] 
+    retry_join     = [ "100.102.0.10", "100.102.0.11", "100.102.0.12" ] 
     retry_max      = 5
     retry_interval = "15s"
   }

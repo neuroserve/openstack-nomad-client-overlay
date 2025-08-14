@@ -1,8 +1,8 @@
 [Unit]
 Description=Nomad
 Documentation=https://www.nomadproject.io/docs/
-Wants=network-online.target
-After=network-online.target
+Wants=network-online.target dnctl.service
+After=network-online.target dnctl.service
 
 # When using Nomad with Consul it is not necessary to start Consul first. These
 # lines start Consul before Nomad as an optimization to avoid Nomad logging
