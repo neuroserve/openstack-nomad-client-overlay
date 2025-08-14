@@ -4,7 +4,8 @@ region             = "${ps_region}"
 datacenter         = "${datacenter_name}"
 client {
   enabled          = true
-# node_pool        = ""
+  node_class       = "dynamic"
+  node_pool        = "nom-pool"
   cni_path         = "/opt/cni/bin"
   cni_config_dir   = "/opt/cni/config"
   server_join {
