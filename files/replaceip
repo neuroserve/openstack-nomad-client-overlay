@@ -1,0 +1,9 @@
+#!/bin/bash
+# check whether network device exists and if yes find out its ip address and replace 127.0.0.1 with that ip address in the file
+NETDEVICE=nebula1
+FILE=/etc/dnsmasq.d/10-consul
+if [ -f /sys/class/net/${NETDEVICE}/operstate ]; then
+     defip=`/usr/sbin/ifconfig ${NETDEVICE} | /usr/bin/grep 'inet' | /usr/bin/awk '{print $2}' | /usr/bin/head -n 1`
+     /usr/bin/sed -i "s/127\.0\.0\.1/$defip/g" ${FILE}
+fi
+/etc/init.d/dnsmasq checkconfig
