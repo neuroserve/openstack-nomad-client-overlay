@@ -94,6 +94,53 @@ resource "tls_locally_signed_cert" "nomad" {
     ]
 }
 
+resource "tls_private_key" "consul" {
+    count = var.config.client_nodes
+    algorithm = "RSA"
+    rsa_bits  = "4096"
+}
+
+# Create the request to sign the cert with our CA
+resource "tls_cert_request" "consul" {
+    count = "${var.config.client_nodes}"
+    private_key_pem = "${element(tls_private_key.consul.*.private_key_pem, count.index)}"
+
+    dns_names = [
+        "consul",
+        "consul.local",
+        "nomad-client-${count.index}.server.${var.config.domain_name}.consul",
+        "localhost",
+        "127.0.0.1",
+    ]
+
+    ip_addresses = [
+        "127.0.0.1",
+    ]
+
+    subject {
+        common_name  = "consul.local"
+        organization = var.config.organization.name
+    }
+}
+
+resource "tls_locally_signed_cert" "consul" {
+    count = var.config.client_nodes
+    cert_request_pem = "${element(tls_cert_request.consul.*.cert_request_pem, count.index)}"
+
+    ca_private_key_pem = file("${var.config.private_key_pem}")
+    ca_cert_pem        = file("${var.config.certificate_pem}")
+
+    validity_period_hours = 8760
+
+    allowed_uses = [
+        "cert_signing",
+        "client_auth",
+        "digital_signature",
+        "key_encipherment",
+        "server_auth",
+    ]
+}
+
 data "openstack_images_image_v2" "os" {
   name        = "debian-11-consul"
   most_recent = "true"
@@ -179,6 +226,126 @@ resource "openstack_networking_secgroup_rule_v2" "sr_4648udp" {
   security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
 }
 
+resource "openstack_networking_secgroup_rule_v2" "sr_8300tcp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 8300
+  port_range_max    = 8300
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "sr_8300udp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 8300
+  port_range_max    = 8300
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "sr_8301tcp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 8301
+  port_range_max    = 8301
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "sr_8301udp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 8301
+  port_range_max    = 8301
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "sr_8302tcp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 8302
+  port_range_max    = 8302
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "sr_8302udp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 8302
+  port_range_max    = 8302
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "sr_8600tcp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 8600
+  port_range_max    = 8600
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "sr_8600udp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 8600
+  port_range_max    = 8600
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "sr_8500tcp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 8500
+  port_range_max    = 8500
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "sr_8501tcp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 8501
+  port_range_max    = 8501
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "sr_8502tcp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 8502
+  port_range_max    = 8502
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "sr_8503tcp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 8503
+  port_range_max    = 8503
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.sg_nomad_client3.id
+}
+
 
 #resource "openstack_networking_rbac_policy_v2" "net_rbac_policy" {
 #  action        = "access_as_shared"
@@ -216,16 +383,13 @@ resource "openstack_compute_instance_v2" "nomad" {
     group = openstack_compute_servergroup_v2.nomadcluster.id
   }
 
-#  network {
-#    uuid = var.config.instance_backnet_uuid
-#  }
-
   network {
     uuid = var.config.instance_network_uuid
   }
   
   metadata = {
      nomad-role = "client"
+     consul-role = "client"
      public-ipv4 = "${element(openstack_networking_floatingip_v2.client_flip.*.address, count.index)}"
      ps_restart_after_maint = "true"
   }
@@ -250,6 +414,17 @@ resource "openstack_compute_instance_v2" "nomad" {
             "sudo chgrp root /opt/nomad",
             "sudo mkdir -p /etc/nomad-autoscaler",
             "sudo mkdir -p /opt/nomad-autoscaler/plugins",
+        ]
+   }
+
+  provisioner "remote-exec" {
+        inline = [
+            "sudo apt-get update",
+            "sudo mkdir -p /etc/consul/certificates",
+            "sudo mkdir -p /opt/consul",
+            "sudo mkdir -p /opt/consul/.ssh",
+            "sudo useradd -d /opt/consul consul",
+            "sudo chown -R consul:consul /opt/consul",
         ]
    }
 
@@ -288,6 +463,42 @@ resource "openstack_compute_instance_v2" "nomad" {
    }
 
    provisioner "file" {
+        content = file("${path.module}/files/jwtcheck.sh")
+        destination = "/usr/local/bin/jwtcheck.sh"
+   }
+
+   provisioner "remote-exec" {
+        inline = [
+            "sudo chmod +x /usr/local/bin/jwtcheck.sh",
+        ]
+   }
+
+   provisioner "file" {
+        content = file("${path.module}/files/ssh/known_hosts")
+        destination = "/opt/consul/.ssh/known_hosts"
+   }
+
+   provisioner "file" {
+        content = file("${path.module}/files/ssh/id_rsa")
+        destination = "/opt/consul/.ssh/id_rsa"
+   }
+
+   provisioner "file" {
+        content = file("${path.module}/files/ssh/id_rsa.pub")
+        destination = "/opt/consul/.ssh/id_rsa.pub"
+   }
+
+   provisioner "remote-exec" {
+        inline = [
+            "sudo chown -R consul:consul /opt/consul",
+            "sudo chmod 0600 /opt/consul/.ssh/id_rsa",
+            "sudo chmod 0644 /opt/consul/.ssh/id_rsa.pub",
+            "sudo chmod 0644 /opt/consul/.ssh/known_hosts",
+            "sudo chmod 0700 /opt/consul/.ssh",
+        ]
+   }
+
+   provisioner "file" {
         content = file("${path.module}/files/bridge.conf")
         destination = "/etc/sysctl.d/bridge.conf"
    }
@@ -314,8 +525,40 @@ resource "openstack_compute_instance_v2" "nomad" {
 
    provisioner "remote-exec" {
       inline = [
+        "chown consul /etc/consul/certificates",
+        "chgrp consul /etc/consul/certificates",
+      ]
+   }
+
+   provisioner "remote-exec" {
+      inline = [
         "sudo mkdir -p /etc/systemd/resolved.conf.d",
       ]
+   }
+
+   provisioner "file" {
+      content = file("${var.config.certificate_pem}")
+      destination = "/etc/consul/certificates/ca.pem"
+   }
+
+   provisioner "file" {
+      content = tls_locally_signed_cert.consul[count.index].cert_pem
+      destination = "/etc/consul/certificates/cert.pem"
+   }
+
+   provisioner "file" {
+      content = tls_private_key.consul[count.index].private_key_pem
+      destination = "/etc/consul/certificates/private_key.pem"
+   }
+
+   provisioner "file" {
+    source = "${path.root}/files/consul.service"
+    destination = "/etc/systemd/system/consul.service" 
+   }
+
+   provisioner "file" {
+    source = "${path.root}/files/consul.conf"
+    destination = "/etc/systemd/resolved.conf.d/consul.conf"
    }
 
    provisioner "file" {
@@ -344,6 +587,22 @@ resource "openstack_compute_instance_v2" "nomad" {
             token = "${var.config.nomad_client_token}"
         })
         destination = "/etc/nomad/nomad.hcl"
+   }
+
+   provisioner "file" {
+      content = templatefile("${path.module}/templates/consul.hcl.tpl", {
+         datacenter_name = var.config.consul_datacenter_name,
+         node_name = "nomad-client-${count.index}"
+         encryption_key = var.config.consul_encryption_key,
+         os_domain_name = var.config.os_domain_name,
+         floatingip = "${element(openstack_networking_floatingip_v2.client_flip.*.address, count.index)}",
+         auth_url = "${var.auth_url}",
+         user_name = "${var.user_name}",
+         password = "${var.password}",
+         os_region   = "${var.config.os_region}",
+         dns_token = "${var.config.consul_dns_token}"
+      })
+      destination = "/etc/consul/consul.hcl"
    }
 
   provisioner "remote-exec" {
@@ -432,6 +691,18 @@ resource "openstack_compute_instance_v2" "nomad" {
            
            "mv /tmp/os-nova /opt/nomad-autoscaler/plugins/",
        ]
+  }
+
+  provisioner "remote-exec" {
+        inline = [
+            "cd /tmp ; wget --no-check-certificate https://releases.hashicorp.com/consul/${local.consul_version}/consul_${local.consul_version}_linux_amd64.zip",
+            "cd /tmp ; unzip consul_${local.consul_version}_linux_amd64.zip",
+            "cd /tmp ; rm consul_${local.consul_version}_linux_amd64.zip",
+
+            "mv /tmp/consul /usr/local/bin/consul",
+            "sudo systemctl enable consul",
+            "sudo systemctl start consul",
+        ]
   }
 
   provisioner "remote-exec" {
