@@ -7,6 +7,7 @@ locals {
     traefik_version="3.5.0"
     traefik_checksum="2ecdcb14492481749176710bce15434bcc22c3124f32867233bb00f4160de661"
     autoscaler_version="0.4.7"
+    consul_version="1.19.1"
 }
 
 variable "auth_url" {
@@ -373,7 +374,7 @@ resource "openstack_compute_floatingip_associate_v2" "client_flip" {
 }
 
 resource "openstack_compute_instance_v2" "nomad" {
-  name            = "nomad-client-${var.config.datacenter_name}-${count.index}"
+  name            = "nomad-client-${var.config.datacenter_name}-${count.index}-${var.config.randomstring}"
   image_id        = data.openstack_images_image_v2.os.id
   flavor_name     = var.config.flavor_name
   key_pair        = openstack_compute_keypair_v2.user_keypair.name
@@ -417,12 +418,11 @@ resource "openstack_compute_instance_v2" "nomad" {
         ]
    }
 
-  provisioner "remote-exec" {
+   provisioner "remote-exec" {
         inline = [
             "sudo apt-get update",
             "sudo mkdir -p /etc/consul/certificates",
             "sudo mkdir -p /opt/consul",
-            "sudo mkdir -p /opt/consul/.ssh",
             "sudo useradd -d /opt/consul consul",
             "sudo chown -R consul:consul /opt/consul",
         ]
@@ -458,44 +458,19 @@ resource "openstack_compute_instance_v2" "nomad" {
    }
 
    provisioner "file" {
+        content = file("${path.module}/files/replaceip")
+        destination = "/usr/local/sbin/replaceip"
+   }
+
+   provisioner "remote-exec" {
+        inline = [
+            "chmod +x /usr/local/sbin/replaceip",
+        ]
+   }
+
+   provisioner "file" {
         content = file("${path.module}/files/docker.list") 
         destination = "/etc/apt/sources.list.d/docker.list"
-   }
-
-   provisioner "file" {
-        content = file("${path.module}/files/jwtcheck.sh")
-        destination = "/usr/local/bin/jwtcheck.sh"
-   }
-
-   provisioner "remote-exec" {
-        inline = [
-            "sudo chmod +x /usr/local/bin/jwtcheck.sh",
-        ]
-   }
-
-   provisioner "file" {
-        content = file("${path.module}/files/ssh/known_hosts")
-        destination = "/opt/consul/.ssh/known_hosts"
-   }
-
-   provisioner "file" {
-        content = file("${path.module}/files/ssh/id_rsa")
-        destination = "/opt/consul/.ssh/id_rsa"
-   }
-
-   provisioner "file" {
-        content = file("${path.module}/files/ssh/id_rsa.pub")
-        destination = "/opt/consul/.ssh/id_rsa.pub"
-   }
-
-   provisioner "remote-exec" {
-        inline = [
-            "sudo chown -R consul:consul /opt/consul",
-            "sudo chmod 0600 /opt/consul/.ssh/id_rsa",
-            "sudo chmod 0644 /opt/consul/.ssh/id_rsa.pub",
-            "sudo chmod 0644 /opt/consul/.ssh/known_hosts",
-            "sudo chmod 0700 /opt/consul/.ssh",
-        ]
    }
 
    provisioner "file" {
@@ -590,22 +565,19 @@ resource "openstack_compute_instance_v2" "nomad" {
    }
 
    provisioner "file" {
-      content = templatefile("${path.module}/templates/consul.hcl.tpl", {
-         datacenter_name = var.config.consul_datacenter_name,
-         node_name = "nomad-client-${count.index}"
-         encryption_key = var.config.consul_encryption_key,
-         os_domain_name = var.config.os_domain_name,
-         floatingip = "${element(openstack_networking_floatingip_v2.client_flip.*.address, count.index)}",
-         auth_url = "${var.auth_url}",
-         user_name = "${var.user_name}",
-         password = "${var.password}",
-         os_region   = "${var.config.os_region}",
-         dns_token = "${var.config.consul_dns_token}"
-      })
-      destination = "/etc/consul/consul.hcl"
+        content = templatefile("${path.module}/templates/consul.hcl.tpl", {
+            ps_region = var.config.ps_region,
+            encryption_key = var.config.consul_encryption_key,
+            os_domain_name = var.config.os_domain_name,
+            auth_url = "${var.auth_url}",
+            user_name = "${var.user_name}",
+            password = "${var.password}",
+            os_region   = "${var.config.os_region}",
+        })
+        destination = "/etc/consul/consul.hcl"
    }
 
-  provisioner "remote-exec" {
+   provisioner "remote-exec" {
        inline = [
 #           "cd /tmp ; curl -O https://dl.defined.net/845e340d/v0.8.1./linux/amd64/dnclient",
 #           "sudo chmod +x /tmp/dnclient ; mv /tmp/dnclient /usr/local/bin",
@@ -613,7 +585,7 @@ resource "openstack_compute_instance_v2" "nomad" {
            "cd /tmp/defined-systemd-units ; sudo ./install",
        ]
  
-  }
+   }
 
   provisioner "file" {
        content = templatefile("${path.module}/templates/dnctl.tpl", {
@@ -688,7 +660,6 @@ resource "openstack_compute_instance_v2" "nomad" {
            "cd /tmp ; wget --no-check-certificate https://github.com/jorgemarey/nomad-nova-autoscaler/releases/download/v0.6.0/nomad-nova-autoscaler-v0.6.0-linux-amd64.tar.gz",
            "cd /tmp ; tar -xvzf nomad-nova-autoscaler-v0.6.0-linux-amd64.tar.gz",
            "cd /tmp ; rm nomad-nova-autoscaler-v0.6.0-linux-amd64.tar.gz",
-           
            "mv /tmp/os-nova /opt/nomad-autoscaler/plugins/",
        ]
   }
@@ -696,7 +667,7 @@ resource "openstack_compute_instance_v2" "nomad" {
   provisioner "remote-exec" {
         inline = [
             "cd /tmp ; wget --no-check-certificate https://releases.hashicorp.com/consul/${local.consul_version}/consul_${local.consul_version}_linux_amd64.zip",
-            "cd /tmp ; unzip consul_${local.consul_version}_linux_amd64.zip",
+            "cd /tmp ; unzip -n -o consul_${local.consul_version}_linux_amd64.zip",
             "cd /tmp ; rm consul_${local.consul_version}_linux_amd64.zip",
 
             "mv /tmp/consul /usr/local/bin/consul",
@@ -715,13 +686,24 @@ resource "openstack_compute_instance_v2" "nomad" {
    }
 
    provisioner "file" {
-    source = "${path.root}/files/10-consul.dnsmasq"
-    destination = "/etc/dnsmasq.d/10-consul"
+        source = "${path.root}/files/10-consul.dnsmasq"
+        destination = "/etc/dnsmasq.d/10-consul"
    }
 
    provisioner "file" {
-    source = "${path.root}/files/dnsmasq.conf"
-    destination = "/etc/dnsmasq.conf"
+        source = "${path.root}/files/dnsmasq.conf"
+        destination = "/etc/dnsmasq.conf"
+   }
+
+   provisioner "remote-exec" {
+        inline = [
+            "mkdir -p /etc/systemd/system/dnsmasq.service.d",
+        ]
+   }
+
+   provisioner "file" {
+        source = "${path.root}/files/dnsmasq.override.conf"
+        destination = "/etc/systemd/system/dnsmasq.service.d/override.conf"
    }
 
    provisioner "remote-exec" {
@@ -729,6 +711,17 @@ resource "openstack_compute_instance_v2" "nomad" {
              "sudo systemctl start dnsmasq",
              "sudo systemctl daemon-reload",
          ]
+   }
+
+   provisioner "remote-exec" {
+        inline = [
+            "mkdir -p /etc/systemd/system/dnctl.service.d",
+        ]
+   }
+
+   provisioner "file" {
+        source = "${path.root}/files/dnctl.override.conf"
+        destination = "/etc/systemd/system/dnctl.service.d/override.conf"
    }
 
    provisioner "remote-exec" {

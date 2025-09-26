@@ -1,7 +1,6 @@
-datacenter = "${datacenter_name}"
+datacenter = "${ps_region}"
 data_dir   =  "/opt/consul"
 log_level  =  "INFO"
-node_name  =  "${node_name}"
 server     =  false
 leave_on_terminate = true
 

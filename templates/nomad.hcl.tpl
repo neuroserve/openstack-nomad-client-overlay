@@ -31,6 +31,16 @@ advertise {
   serf = "{{ GetInterfaceIP \"defined1\" }}" # must be reachable by Nomad server nodes
 }
 
+consul {
+  address = "{{ GetInterfaceIP \"defined1\" }}:8500"
+  ca_file      = "/etc/consul/certificates/ca.pem"
+  cert_file    = "/etc/consul/certificates/cert.pem"
+  key_file     = "/etc/consul/certificates/private_key.pem"
+  ssl          = false
+  auto_advertise = true
+  client_auto_join = true
+}
+
 tls {
   http = true
   rpc  = true
