@@ -1,3 +1,0 @@
-# put in /etc/systemd/system/dnsmasq.service.d/override.conf
-[Service]
-ExecStartPre=/usr/local/sbin/replaceip
